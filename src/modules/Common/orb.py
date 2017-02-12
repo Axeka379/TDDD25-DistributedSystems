@@ -2,7 +2,7 @@
 # Distributed Systems (TDDD25)
 # -----------------------------------------------------------------------------
 # Author: Sergiu Rafiliu (sergiu.rafiliu@liu.se)
-# Modified: 31 July 2013
+# Modified: 07 February 2017
 #
 # Copyright 2012 Linkoping University
 # -----------------------------------------------------------------------------
