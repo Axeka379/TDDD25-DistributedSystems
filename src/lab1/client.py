@@ -4,9 +4,9 @@
 # Distributed Systems (TDDD25)
 # -----------------------------------------------------------------------------
 # Author: Sergiu Rafiliu (sergiu.rafiliu@liu.se)
-# Modified: 31 July 2013
+# Modified: 16 March 2017
 #
-# Copyright 2012 Linkoping University
+# Copyright 2012-2017 Linkoping University
 # -----------------------------------------------------------------------------
 
 """Client reader/writer for a fortune database."""
@@ -53,7 +53,7 @@ server_address = opts.address[0]
 # -----------------------------------------------------------------------------
 
 
-class ComunicationError(Exception):
+class CommunicationError(Exception):
     pass
 
 

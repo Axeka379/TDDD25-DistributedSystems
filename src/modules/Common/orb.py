@@ -2,9 +2,9 @@
 # Distributed Systems (TDDD25)
 # -----------------------------------------------------------------------------
 # Author: Sergiu Rafiliu (sergiu.rafiliu@liu.se)
-# Modified: 07 February 2017
+# Modified: 16 March 2017
 #
-# Copyright 2012 Linkoping University
+# Copyright 2012-2017 Linkoping University
 # -----------------------------------------------------------------------------
 
 import threading
@@ -30,7 +30,7 @@ objects that communicate via networks. This infrastructure consists of:
 """
 
 
-class ComunicationError(Exception):
+class CommunicationError(Exception):
     pass
 
 
@@ -129,7 +129,7 @@ class Peer:
         if addr_name != "":
             addrs = socket.gethostbyname_ex(addr_name)[2]
             if len(addrs) == 0:
-                raise ComunicationError("Invalid address to listen to")
+                raise CommunicationError("Invalid address to listen to")
             elif len(addrs) == 1:
                 addr_name = addrs[0]
             else:
