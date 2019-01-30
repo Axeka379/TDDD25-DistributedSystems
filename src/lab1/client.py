@@ -66,16 +66,38 @@ class DatabaseProxy(object):
 
     # Public methods
 
+    #def create_and_connect_socket(self):
+
     def read(self):
         #
         # Your code here.
         #
-        pass
+
+        x = (
+                {
+                "method" : "read",
+                "args" : []
+                }
+            )
+
+        y = json.dumps(x)
+        #y = str(x)
+        b = y.encode('utf-8')
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.connect(server_address)
+        s.send(b)
+
 
     def write(self, fortune):
         #
         # Your code here.
         #
+        json.dumps(
+            {
+                "method" : "write",
+                "args": [fortune]
+            }
+        )
         pass
 
 # -----------------------------------------------------------------------------

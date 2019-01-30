@@ -67,12 +67,15 @@ class Server(object):
         #
         # Your code here.
         #
+        return db.read()
+
         pass
 
     def write(self, fortune):
         #
         # Your code here.
         #
+        self.db.write(fortune)
         pass
 
 
@@ -92,6 +95,7 @@ class Request(threading.Thread):
     # Private methods
 
     def process_request(self, request):
+
         """ Process a JSON formated request, send it to the database, and
             return the result.
 
@@ -117,6 +121,19 @@ class Request(threading.Thread):
         #
         # Your code here.
         #
+
+
+        #request = request.decode('utf-8')
+        json.loads(request)
+        print(request)
+        if request["method"] == "read":
+            self.db.read()
+        #else if request["method"] == "write":
+        #    self.db.write(request["args"])
+        #else:
+        #    print("error")
+
+
         pass
 
     def run(self):
