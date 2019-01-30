@@ -14,8 +14,8 @@ import random
 
 class Database(object):
 
+    fortune_list = list()
     """Class containing a database implementation."""
-
     def __init__(self, db_file):
         self.db_file = db_file
         self.rand = random.Random()
@@ -23,18 +23,36 @@ class Database(object):
         #
         # Your code here.
         #
-        pass
+        temporary_string = ""
+
+        file = open(db_file, "r+")
+
+        for line in file:
+            if line != "%\n":
+                temporary_string += line
+            else:
+                self.fortune_list.append(temporary_string)
+                temporary_string = ""
+        file.close()
 
     def read(self):
         """Read a random location in the database."""
         #
         # Your code here.
         #
-        pass
+
+        if self.fortune_list:
+            return random.choice(self.fortune_list)
+
 
     def write(self, fortune):
         """Write a new fortune to the database."""
         #
         # Your code here.
         #
-        pass
+        self.fortune_list.append(fortune)
+
+        file = open(self.db_file, "a+")
+        file.write(fortune)
+        file.write("\n%\n")
+        file.close()
