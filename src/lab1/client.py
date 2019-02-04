@@ -66,39 +66,40 @@ class DatabaseProxy(object):
 
     # Public methods
 
-    #def create_and_connect_socket(self):
-
+    def create_socket(self, jsonData):
+        jsonData = json.dumps(jsonData)
+        encodedData = jsonData.encode('utf-8')
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.connect(server_address)
+        s.send(encodedData)
+        
     def read(self):
         #
         # Your code here.
         #
-
-        x = (
+        jsonData = (
                 {
                 "method" : "read",
                 "args" : []
                 }
             )
+        response = self.create_socket(jsonData)
 
-        y = json.dumps(x)
-        #y = str(x)
-        b = y.encode('utf-8')
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect(server_address)
-        s.send(b)
+        print(type(response))
+        #return response.get("result")
 
 
     def write(self, fortune):
         #
         # Your code here.
         #
-        json.dumps(
+        jsonData = (
             {
                 "method" : "write",
                 "args": [fortune]
             }
         )
-        pass
+        self.create_socket(jsonData)
 
 # -----------------------------------------------------------------------------
 # The main program

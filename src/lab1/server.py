@@ -35,7 +35,8 @@ parallel.\
 parser = argparse.ArgumentParser(description=description)
 parser.add_argument(
     "-p", "--port", metavar="PORT", dest="port", type=int,
-    default=rand.randint(1, 10000) + 40000, choices=range(40001, 50000),
+    #default=rand.randint(1, 10000) + 40000, choices=range(40001, 50000),
+    default=40002,
     help="Set the port to listen to. Values in [40001, 50000]. "
          "The default value is chosen at random."
 )
@@ -67,16 +68,14 @@ class Server(object):
         #
         # Your code here.
         #
-        return db.read()
+        return Database.read(self)
 
-        pass
 
     def write(self, fortune):
         #
         # Your code here.
         #
-        self.db.write(fortune)
-        pass
+        Database.write(self, fortune)
 
 
 class Request(threading.Thread):
@@ -84,6 +83,7 @@ class Request(threading.Thread):
     """ Class for handling incoming requests.
         Each request is handled in a separate thread.
     """
+    fortune_list = Database.fortune_list
 
     def __init__(self, db_server, conn, addr):
         threading.Thread.__init__(self)
@@ -122,21 +122,27 @@ class Request(threading.Thread):
         # Your code here.
         #
 
+        #print(fortune_list)
+        request = json.loads(request)
 
-        #request = request.decode('utf-8')
-        json.loads(request)
-        print(request)
-        if request["method"] == "read":
-            self.db.read()
-        #else if request["method"] == "write":
-        #    self.db.write(request["args"])
-        #else:
-        #    print("error")
+        if request.get('method') == "read":
+            method_result = Server.read(self)
+        elif request.get("method") == "write":
+            method_result = Server.write(self)
+        else:
+            method_result = {
+                "error" : request
+            }
+            return method_result
 
-
-        pass
+        result = {
+            "result": method_result
+        }
+        result = json.dumps(result)
+        return result
 
     def run(self):
+
         try:
             # Threat the socket as a file stream.
             worker = self.conn.makefile(mode="rw")
@@ -147,6 +153,7 @@ class Request(threading.Thread):
             # Send the result.
             worker.write(result + '\n')
             worker.flush()
+
         except Exception as e:
             # Catch all errors in order to prevent the object from crashing
             # due to bad connections coming from outside.
