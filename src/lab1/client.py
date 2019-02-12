@@ -71,42 +71,32 @@ class DatabaseProxy(object):
         jsonData = json.dumps(jsonData)
         encodedData = jsonData.encode('utf-8')
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            #s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             s.connect(server_address)
             s.sendall(encodedData)
-            ready = select.select([s], [], [], 10)
-            if ready[0]:
-                data = s.read(4096)
+            test = s.recv(2048)
+            return test.decode('utf-8')
 
 
-        #s.close()
-
-
+    def fix_json(self, returnedJson):
+        returnedJson = json.loads(returnedJson)
+        return returnedJson.get('result')
     def read(self):
         #
         # Your code here.
         #
-        jsonData = (
-                {
-                "method" : "read",
-                "args" : []
-                }
-            )
-        self.create_socket(jsonData)
-
+        jsonData = {"method" : "read", "args" : []}
+        returnedJson = self.create_socket(jsonData)
+        return self.fix_json(returnedJson)
 
 
     def write(self, fortune):
         #
         # Your code here.
         #
-        jsonData = (
-            {
-                "method" : "write",
-                "args": [fortune]
-            }
-        )
-        self.create_socket(jsonData)
+        jsonData = {"method" : "write", "args" : fortune}
+        returnedJson = self.create_socket(jsonData)
+        return self.fix_json(returnedJson)
+
 
 # -----------------------------------------------------------------------------
 # The main program

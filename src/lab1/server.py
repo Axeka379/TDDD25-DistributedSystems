@@ -36,7 +36,7 @@ parser = argparse.ArgumentParser(description=description)
 parser.add_argument(
     "-p", "--port", metavar="PORT", dest="port", type=int,
     #default=rand.randint(1, 10000) + 40000, choices=range(40001, 50000),
-    default=40030,
+    default=40001,
     help="Set the port to listen to. Values in [40001, 50000]. "
          "The default value is chosen at random."
 )
@@ -68,6 +68,7 @@ class Server(object):
         #
         # Your code here.
         #
+        #print(db_file)
         return Database.read(self)
 
 
@@ -122,10 +123,10 @@ class Request(threading.Thread):
         #
         print(request)
         request = json.loads(request)
-        if request.get('method') == "read":
+        if request.get("method") == "read":
             method_result = Server.read(self)
         elif request.get("method") == "write":
-            method_result = Server.write(self)
+            method_result = Server.write(self, request.get("args"))
         else:
             method_result = {
                 "error" : request
@@ -137,9 +138,6 @@ class Request(threading.Thread):
         }
 
         result = json.dumps(result)
-    #    sent = conn.send(b'hello')
-        #s.connect(self.addr)
-        #s.sendall(result)
         return result
 
     def run(self):
@@ -151,9 +149,7 @@ class Request(threading.Thread):
             request = worker.readline()
             # Process the request.
             result = self.process_request(request)
-
             # Send the result.
-            print(result)
             worker.write(result + '\n')
             worker.flush()
         except Exception as e:
@@ -184,6 +180,7 @@ try:
     while True:
         try:
             conn, addr = server.accept()
+            conn.setblocking(0)
             req = Request(sync_db, conn, addr)
             print("Serving a request from {0}".format(addr))
             req.start()
