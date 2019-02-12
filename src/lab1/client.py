@@ -15,6 +15,7 @@ import sys
 import socket
 import json
 import argparse
+import select
 
 # -----------------------------------------------------------------------------
 # Initialize and read the command line arguments
@@ -69,10 +70,18 @@ class DatabaseProxy(object):
     def create_socket(self, jsonData):
         jsonData = json.dumps(jsonData)
         encodedData = jsonData.encode('utf-8')
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect(server_address)
-        s.send(encodedData)
-        
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            #s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            s.connect(server_address)
+            s.sendall(encodedData)
+            ready = select.select([s], [], [], 10)
+            if ready[0]:
+                data = s.read(4096)
+
+
+        #s.close()
+
+
     def read(self):
         #
         # Your code here.
@@ -83,10 +92,8 @@ class DatabaseProxy(object):
                 "args" : []
                 }
             )
-        response = self.create_socket(jsonData)
+        self.create_socket(jsonData)
 
-        print(type(response))
-        #return response.get("result")
 
 
     def write(self, fortune):

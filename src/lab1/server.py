@@ -36,7 +36,7 @@ parser = argparse.ArgumentParser(description=description)
 parser.add_argument(
     "-p", "--port", metavar="PORT", dest="port", type=int,
     #default=rand.randint(1, 10000) + 40000, choices=range(40001, 50000),
-    default=40002,
+    default=40030,
     help="Set the port to listen to. Values in [40001, 50000]. "
          "The default value is chosen at random."
 )
@@ -91,7 +91,6 @@ class Request(threading.Thread):
         self.conn = conn
         self.addr = addr
         self.daemon = True
-
     # Private methods
 
     def process_request(self, request):
@@ -121,10 +120,8 @@ class Request(threading.Thread):
         #
         # Your code here.
         #
-
-        #print(fortune_list)
+        print(request)
         request = json.loads(request)
-
         if request.get('method') == "read":
             method_result = Server.read(self)
         elif request.get("method") == "write":
@@ -138,7 +135,11 @@ class Request(threading.Thread):
         result = {
             "result": method_result
         }
+
         result = json.dumps(result)
+    #    sent = conn.send(b'hello')
+        #s.connect(self.addr)
+        #s.sendall(result)
         return result
 
     def run(self):
@@ -150,10 +151,11 @@ class Request(threading.Thread):
             request = worker.readline()
             # Process the request.
             result = self.process_request(request)
+
             # Send the result.
+            print(result)
             worker.write(result + '\n')
             worker.flush()
-
         except Exception as e:
             # Catch all errors in order to prevent the object from crashing
             # due to bad connections coming from outside.
