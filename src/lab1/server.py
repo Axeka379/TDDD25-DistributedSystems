@@ -35,8 +35,8 @@ parallel.\
 parser = argparse.ArgumentParser(description=description)
 parser.add_argument(
     "-p", "--port", metavar="PORT", dest="port", type=int,
-    #default=rand.randint(1, 10000) + 40000, choices=range(40001, 50000),
-    default=40000,
+    default=rand.randint(1, 10000) + 40000, choices=range(40001, 50000),
+    #default=40000,
     help="Set the port to listen to. Values in [40001, 50000]. "
          "The default value is chosen at random."
 )
@@ -131,10 +131,11 @@ class Request(threading.Thread):
             result = {
                 "result": method_result
             }
+
         except Exception as e:
             result = {
                 "error" : {
-                    "name": str(type(e)),
+                    "name": type(e).__name__,
                     "args": e.args
                 }
             }
@@ -161,6 +162,7 @@ class Request(threading.Thread):
             print("\t{}: {}".format(type(e), e))
         finally:
             self.conn.close()
+
 
 # -----------------------------------------------------------------------------
 # The main program

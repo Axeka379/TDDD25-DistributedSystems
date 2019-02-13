@@ -66,21 +66,23 @@ class DatabaseProxy(object):
         self.address = server_address
 
     # Public methods
-
     def create_socket(self, jsonData):
         jsonData = json.dumps(jsonData)
-        encodedData = jsonData.encode('utf-8')
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.connect(server_address)
-            s.sendall(encodedData)
-            receivedData = s.recv(2048)
-            return receivedData.decode('utf-8')
-
+            worker = s.makefile(mode="rw")
+            worker.write(jsonData)
+            worker.flush()
+            readData = worker.readline()
+            return readData
 
     def fix_json(self, returnedJson):
         returnedJson = json.loads(returnedJson)
-        if returnedJson.get("error"):
-            return returnedJson.get("error")
+        if "error" in returnedJson:
+            errorInfo = returnedJson["error"]
+            errorName = type(errorInfo["name"], (Exception,), {})
+            errorArgs = tuple(errorInfo["args"])
+            raise errorName(*errorArgs)
         else:
             return returnedJson.get("result")
 
