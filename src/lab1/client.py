@@ -73,13 +73,18 @@ class DatabaseProxy(object):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.connect(server_address)
             s.sendall(encodedData)
-            test = s.recv(2048)
-            return test.decode('utf-8')
+            receivedData = s.recv(2048)
+            return receivedData.decode('utf-8')
 
 
     def fix_json(self, returnedJson):
         returnedJson = json.loads(returnedJson)
-        return returnedJson.get('result')
+        if returnedJson.get("error"):
+            return returnedJson.get("error")
+        else:
+            return returnedJson.get("result")
+
+
     def read(self):
         #
         # Your code here.

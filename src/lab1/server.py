@@ -36,7 +36,7 @@ parser = argparse.ArgumentParser(description=description)
 parser.add_argument(
     "-p", "--port", metavar="PORT", dest="port", type=int,
     #default=rand.randint(1, 10000) + 40000, choices=range(40001, 50000),
-    default=40001,
+    default=40000,
     help="Set the port to listen to. Values in [40001, 50000]. "
          "The default value is chosen at random."
 )
@@ -68,24 +68,25 @@ class Server(object):
         #
         # Your code here.
         #
-        #print(db_file)
-        return Database.read(self)
-
+        self.rwlock.read_acquire()
+        result = self.db.read()
+        self.rwlock.read_release()
+        return result
 
     def write(self, fortune):
         #
         # Your code here.
         #
-        Database.write(self, fortune)
-
+        self.rwlock.write_acquire()
+        result = self.db.write(fortune)
+        self.rwlock.write_release()
+        return result
 
 class Request(threading.Thread):
 
     """ Class for handling incoming requests.
         Each request is handled in a separate thread.
     """
-    fortune_list = Database.fortune_list
-
     def __init__(self, db_server, conn, addr):
         threading.Thread.__init__(self)
         self.db_server = db_server
@@ -121,24 +122,25 @@ class Request(threading.Thread):
         #
         # Your code here.
         #
-        print(request)
-        request = json.loads(request)
-        if request.get("method") == "read":
-            method_result = Server.read(self)
-        elif request.get("method") == "write":
-            method_result = Server.write(self, request.get("args"))
-        else:
-            method_result = {
-                "error" : request
+        try:
+            request = json.loads(request)
+            if request.get("method") == "read":
+                method_result = self.db_server.read()
+            elif request.get("method") == "write":
+                method_result = self.db_server.write(request.get("args"))
+            result = {
+                "result": method_result
             }
-            return method_result
-
-        result = {
-            "result": method_result
-        }
-
-        result = json.dumps(result)
-        return result
+        except Exception as e:
+            result = {
+                "error" : {
+                    "name": str(type(e)),
+                    "args": e.args
+                }
+            }
+        finally:
+            result = json.dumps(result)
+            return result
 
     def run(self):
 
