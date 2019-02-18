@@ -16,7 +16,7 @@ import json
 This module implements the infrastructure needed to transparently create
 objects that communicate via networks. This infrastructure consists of:
 
---  Strub ::
+--  Stub ::
         Represents the image of a remote object on the local machine.
         Used to connect to remote objects. Also called Proxy.
 --  Skeleton ::
@@ -49,7 +49,24 @@ class Stub(object):
         #
         # Your code here.
         #
-        pass
+        jsonData = {"method": method, "args" : args}
+        jsonData = json.dumps(jsonData)
+
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.connect(self.address)
+
+            worker = s.makefile(mode="rw")
+            worker.write(jsonData + "\n")
+            worker.flush()
+            readData = worker.readline()
+            readData = json.loads(readData)
+            if "error" in readData:
+                errorInfo = readData["error"]
+                errorName = type(errorInfo["name"], (Exception,), {})
+                errorArgs = tuple(errorInfo["args"])
+                raise errorName(*errorArgs)
+            else:
+                return readData["result"]
 
     def __getattr__(self, attr):
         """Forward call to name over the network at the given address."""
@@ -73,8 +90,42 @@ class Request(threading.Thread):
         #
         # Your code here.
         #
-        pass
+        try:
+            worker = self.conn.makefile(mode="rw")
+            request = worker.readline()
+            result = self.process_request(request)
+            worker.write(result + "\n")
+            worker.flush()
+        except Exception as e:
+            print("The connection to the caller has died:")
+            print("\t{}: {}".format(type(e), e))
+        finally:
+            self.conn.close()
 
+
+    def small_error(self):
+        raise ValueError("Wrong value")
+
+    def process_request(request):
+        try:
+            request = json.loads(request)
+            method = request.get("method")
+            method_result = method(*request.get("args"), [])
+
+            result = {
+                "result": method_result
+            }
+
+        except Exception as e:
+            result = {
+                "error" : {
+                    "name": type(e).__name__,
+                    "args": e.args
+                }
+            }
+        finally:
+            result = json.dumps(result)
+            return result
 
 class Skeleton(threading.Thread):
 
@@ -93,13 +144,25 @@ class Skeleton(threading.Thread):
         #
         # Your code here.
         #
-        pass
+        self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.server.bind(self.address)
+        self.server.listen(1)
 
     def run(self):
         #
         # Your code here.
         #
-        pass
+        try:
+            while True:
+                try:
+                    conn, addr = self.server.accept()
+                    #conn.setblocking(0)
+                    req = Request(self.owner, conn, addr)
+                    req.start()
+                except socket.error:
+                    continue
+        except KeyboardInterrupt:
+            pass
 
 
 class Peer:
