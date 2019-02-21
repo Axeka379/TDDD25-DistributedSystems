@@ -102,15 +102,12 @@ class Request(threading.Thread):
         finally:
             self.conn.close()
 
-
-    def small_error(self):
-        raise ValueError("Wrong value")
-
     def process_request(request):
         try:
+            print("helloooooooo")
             request = json.loads(request)
             method = request.get("method")
-            method_result = method(*request.get("args"), [])
+            method_result = self.owner.method(*request.get("args"))
 
             result = {
                 "result": method_result
@@ -156,7 +153,6 @@ class Skeleton(threading.Thread):
             while True:
                 try:
                     conn, addr = self.server.accept()
-                    #conn.setblocking(0)
                     req = Request(self.owner, conn, addr)
                     req.start()
                 except socket.error:
