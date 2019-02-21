@@ -11,7 +11,7 @@
 
 import threading
 from Common import orb
-
+from Common import objectType
 
 class PeerList(object):
 
@@ -39,19 +39,15 @@ class PeerList(object):
             #
             # Your code here.
             #
-            # Hämta alla reg peers(get_peers())
-            # Registrera peer(owner) i deras lista om owner.id < peer.id
-            # Lägg in dom i vår lista(self.peers) om peer.id < owner.id
-            tmp_list = list()
-            tmp_list = self.get_peers()
-            print(self.get_peers())
-            for peer in tmp_list:
-                if owner.id < peer.id:
-                    peer.peer_list.append(owner.id)
-                elif peer.id < owner.id:
-                    self.peers[peer.id] = peer
-
-            print(tmp_list)
+            tmp_dict = {}
+            tmp_dict = self.owner.name_service.require_all(objectType.object_type)
+            for pid, paddr in tmp_dict.iteritems():
+                if self.owner.id == pid:
+                    self.peers[pid] = orb.Stub(paddr)
+                elif pid < self.owner.id:
+                    self.peers[pid] = orb.Stub(paddr)
+                    tmp_peer = self.peer(pid)
+                    tmp_peer.register_peer(pid, paddr)                   
         finally:
             self.lock.release()
 
@@ -63,14 +59,15 @@ class PeerList(object):
             #
             # Your code here.
             #
-            # Hämta alla reg peers(get_peers())
-            # Avregistrera peer(owner) i deras lista
-            tmp_list = ()
-            tmp_list = self.get_peers()
-            for peer in tmp_list:
-                for p in peer.peer_list:
-                    if owner.id == p.id:
-                        peer.peer_list.remove(p)
+            tmp_dict = {}
+            tmp_dict = self.owner.name_service.require_all(objectType.object_type)
+            for pid, paddr in tmp_dict.iteritems():
+                try:
+                    del self.peers[pid]
+                    tmp_peer = self.peer(pid)
+                    tmp_peer.unregister_peer(pid)
+                finally:
+                    pass
         finally:
             self.lock.release()
 
