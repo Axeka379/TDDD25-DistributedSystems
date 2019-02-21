@@ -39,15 +39,17 @@ class PeerList(object):
             #
             # Your code here.
             #
-            tmp_dict = {}
-            tmp_dict = self.owner.name_service.require_all(objectType.object_type)
-            for pid, paddr in tmp_dict.iteritems():
-                if self.owner.id == pid:
-                    self.peers[pid] = orb.Stub(paddr)
-                elif pid < self.owner.id:
-                    self.peers[pid] = orb.Stub(paddr)
-                    tmp_peer = self.peer(pid)
-                    tmp_peer.register_peer(pid, paddr)                   
+            all_peers = self.owner.name_service.require_all(objectType.object_type)
+            self.peers[self.owner.id] = orb.Stub(self.owner.address)
+            for pid, paddr in all_peers:
+                if pid < self.owner.id:
+                    try:
+                        tmp_peer = orb.Stub(paddr)
+                        tmp_peer.register_peer(self.owner.id, self.owner.address)
+                        self.peers[pid] = tmp_peer
+                    except:
+                        print("Failed to connect to peer")
+
         finally:
             self.lock.release()
 
@@ -59,16 +61,16 @@ class PeerList(object):
             #
             # Your code here.
             #
-            tmp_dict = {}
-            tmp_dict = self.owner.name_service.require_all(objectType.object_type)
-            for pid, paddr in tmp_dict.iteritems():
+            for pid in self.peers:
                 try:
-                    del self.peers[pid]
-                    tmp_peer = self.peer(pid)
-                    tmp_peer.unregister_peer(pid)
-                finally:
-                    pass
+                    if self.owner.id != pid:
+                        self.peers[pid].unregister_peer(self.owner.id)
+                        print("Peer " + str(pid) + " unregistered")
+                except:
+                    print("Could not destroy peer " + str(pid))
         finally:
+            del self.peers[self.owner.id]
+            print("Peer " + str(self.owner.id) + " unregistered (self)")
             self.lock.release()
 
     def register_peer(self, pid, paddr):

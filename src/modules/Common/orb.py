@@ -53,12 +53,16 @@ class Stub(object):
         jsonData = json.dumps(jsonData)
 
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+
             s.connect(self.address)
 
+            print("Hello")
             worker = s.makefile(mode="rw")
             worker.write(jsonData + "\n")
             worker.flush()
             readData = worker.readline()
+            print(readData)
+
             readData = json.loads(readData)
             if "error" in readData:
                 errorInfo = readData["error"]
@@ -93,7 +97,27 @@ class Request(threading.Thread):
         try:
             worker = self.conn.makefile(mode="rw")
             request = worker.readline()
-            result = self.process_request(request)
+            request = json.loads(request)
+
+            try:
+                print("helloooooooo")
+                method = request.get("method")
+                args = tuple(request.get("args"))
+                method_result = getattr(self.owner, method)(*args)
+                result = {
+                    "result": method_result
+                }
+
+            except Exception as e:
+                result = {
+                    "error" : {
+                        "name": type(e).__name__,
+                        "args": e.args
+                    }
+                }
+            finally:
+                result = json.dumps(result)
+
             worker.write(result + "\n")
             worker.flush()
         except Exception as e:
@@ -101,28 +125,6 @@ class Request(threading.Thread):
             print("\t{}: {}".format(type(e), e))
         finally:
             self.conn.close()
-
-    def process_request(request):
-        try:
-            print("helloooooooo")
-            request = json.loads(request)
-            method = request.get("method")
-            method_result = self.owner.method(*request.get("args"))
-
-            result = {
-                "result": method_result
-            }
-
-        except Exception as e:
-            result = {
-                "error" : {
-                    "name": type(e).__name__,
-                    "args": e.args
-                }
-            }
-        finally:
-            result = json.dumps(result)
-            return result
 
 class Skeleton(threading.Thread):
 
