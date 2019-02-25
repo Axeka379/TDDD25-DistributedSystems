@@ -101,7 +101,7 @@ class Client(orb.Peer):
 # -----------------------------------------------------------------------------
 
 # Initialize the client object.
-local_address = (socket.gethostname(), local_port)
+local_address = ("10.253.210.34", local_port)
 p = Client(local_address, name_service_address, client_type)
 
 

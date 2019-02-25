@@ -10,7 +10,7 @@
 import threading
 import socket
 import json
-
+import time
 """Object Request Broker
 
 This module implements the infrastructure needed to transparently create
@@ -45,6 +45,17 @@ class Stub(object):
     def __init__(self, address):
         self.address = tuple(address)
 
+
+    def check_if_error(self, data):
+        if "error" in data:
+            errorInfo = data["error"]
+            errorName = type(errorInfo["name"], (Exception,), {})
+            errorArgs = tuple(errorInfo["args"])
+            #raise errorName(*errorArgs)
+            return data["error"]
+        else:
+            return data["result"]
+
     def _rmi(self, method, *args):
         #
         # Your code here.
@@ -53,24 +64,14 @@ class Stub(object):
         jsonData = json.dumps(jsonData)
 
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-
             s.connect(self.address)
-
-            print("Hello")
             worker = s.makefile(mode="rw")
             worker.write(jsonData + "\n")
             worker.flush()
             readData = worker.readline()
-            print(readData)
-
             readData = json.loads(readData)
-            if "error" in readData:
-                errorInfo = readData["error"]
-                errorName = type(errorInfo["name"], (Exception,), {})
-                errorArgs = tuple(errorInfo["args"])
-                raise errorName(*errorArgs)
-            else:
-                return readData["result"]
+            return self.check_if_error(readData)
+
 
     def __getattr__(self, attr):
         """Forward call to name over the network at the given address."""
@@ -100,7 +101,6 @@ class Request(threading.Thread):
             request = json.loads(request)
 
             try:
-                print("helloooooooo")
                 method = request.get("method")
                 args = tuple(request.get("args"))
                 method_result = getattr(self.owner, method)(*args)
@@ -117,7 +117,6 @@ class Request(threading.Thread):
                 }
             finally:
                 result = json.dumps(result)
-
             worker.write(result + "\n")
             worker.flush()
         except Exception as e:

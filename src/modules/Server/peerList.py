@@ -39,7 +39,7 @@ class PeerList(object):
             #
             # Your code here.
             #
-            all_peers = self.owner.name_service.require_all(objectType.object_type)
+            all_peers = self.owner.name_service.require_all(self.owner.type)
             self.peers[self.owner.id] = orb.Stub(self.owner.address)
             for pid, paddr in all_peers:
                 if pid < self.owner.id:
@@ -49,6 +49,7 @@ class PeerList(object):
                         self.peers[pid] = tmp_peer
                     except:
                         print("Failed to connect to peer")
+
 
         finally:
             self.lock.release()
@@ -61,16 +62,19 @@ class PeerList(object):
             #
             # Your code here.
             #
-            for pid in self.peers:
+
+            pids = sorted(self.peers.keys())
+            print(self.owner)
+            for pid in pids:
                 try:
                     if self.owner.id != pid:
                         self.peers[pid].unregister_peer(self.owner.id)
-                        print("Peer " + str(pid) + " unregistered")
+                        del self.peers[pid]
                 except:
+
                     print("Could not destroy peer " + str(pid))
+
         finally:
-            del self.peers[self.owner.id]
-            print("Peer " + str(self.owner.id) + " unregistered (self)")
             self.lock.release()
 
     def register_peer(self, pid, paddr):
@@ -105,6 +109,7 @@ class PeerList(object):
 
         self.lock.acquire()
         try:
+            print(sorted(self.peers.keys()))
             pids = sorted(self.peers.keys())
             print("List of peers of type '{}':".format(self.owner.type))
             for pid in pids:
