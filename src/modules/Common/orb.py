@@ -51,8 +51,8 @@ class Stub(object):
             errorInfo = data["error"]
             errorName = type(errorInfo["name"], (Exception,), {})
             errorArgs = tuple(errorInfo["args"])
-            #raise errorName(*errorArgs)
-            return data["error"]
+            raise errorName(*errorArgs)
+            #return data["error"]
         else:
             return data["result"]
 
