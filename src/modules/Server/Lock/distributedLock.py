@@ -162,7 +162,6 @@ class DistributedLock(object):
             for peer in peers:
                 if peer != self.owner.id:
                     tmp_peer = peers[peer]
-                    print(peer)
                     tmp_peer.request_token(self.time, self.owner.id)
             while (self.state == NO_TOKEN):
                 continue
@@ -181,28 +180,23 @@ class DistributedLock(object):
         self.time += 1
         self.peer_list.lock.acquire()
         if self.state == TOKEN_PRESENT or self.state == TOKEN_HELD:
+            self.token[self.owner.id] = self.time
             self.state = TOKEN_PRESENT
             time_list = self.request
             peers = self.peer_list.get_peers()
-            for peer in peers:
-                if self.owner.id != peer:
-                    smallest_time = min(time_list, key=time_list.get)
-                    print(time_list[smallest_time])
+            while(len(time_list) != 0):
+                smallest_time = min(time_list, key=time_list.get)
+                tmp_peer = peers[smallest_time]
+                if self.owner.id != smallest_time:
                     if self.request[smallest_time] < self.token[smallest_time] or time_list[smallest_time] == 0:
                         time_list.pop(smallest_time)
-                        print("done popping")
                     else:
-                        print("inside else")
                         self.state = NO_TOKEN
-                        self.token[self.owner.id] = self.time
                         send_token = self._prepare(self.token)
-                        tmp_peer = peers[smallest_time]
                         tmp_peer.obtain_token(send_token)
                         break
                 else:
-                    smallest_time = min(time_list, key=time_list.get)
                     time_list.pop(smallest_time)
-                    print("done popping self")
         else:
             print("No token :(")
 
@@ -218,12 +212,11 @@ class DistributedLock(object):
         try:
             self.time += 1
             self.peer_list.lock.acquire()
-            print("Efter chquire")
-            print(str(self.request[pid]))
-            print(str(time) + ": The time yo")
-            self.request[pid] = max(self.request[pid], time)
-            print("Inne i request_tokennnnnnnnnnnnnnnnnnnnnnnnn :)")
-            print("Inne i request_token :)")
+            print("Self request below...")
+            if pid in self.request:
+                self.request[pid] = max(self.request[pid], time)
+            else:
+                self.request[pid] = time
             if self.state == TOKEN_PRESENT:
                 self.owner.release()
         except Exception as e:
