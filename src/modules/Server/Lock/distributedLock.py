@@ -108,7 +108,6 @@ class DistributedLock(object):
         give it to someone else.
 
         """
-
         #
         # Your code here.
         #
@@ -117,11 +116,16 @@ class DistributedLock(object):
         chosen_peer = list(peers.values())[0]
 
         if self.state == TOKEN_PRESENT or self.state == TOKEN_HELD:
-            if self.owner.id == chosen_peer.id:
+            if self.owner.id == next(iter(peers)):
                 chosen_peer = list(peers.values())[1]
-                chosen_peer.state = TOKEN_PRESENT
                 self.state = NO_TOKEN
+            else:
+                self.state = NO_TOKEN
+                print("Sent token: " + str(next(iter(peers))))
 
+            send_token = self._prepare(self.token)
+            chosen_peer.obtain_token(send_token)
+        #self.unregister_peer(self.owner.id)
         self.peer_list.lock.release()
 
     def register_peer(self, pid):
