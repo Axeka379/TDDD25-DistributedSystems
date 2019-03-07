@@ -109,32 +109,54 @@ class DistributedLock(object):
         #
         # Your code here.
         #
-
-        # Check requests first to give token to them, do it in a circular fashion, closest first...
-        # Then give to anyone...
-
         self.peer_list.lock.acquire()
         peers = self.peer_list.get_peers()
         the_bool_solution = False
-
         if self.state == TOKEN_PRESENT or self.state == TOKEN_HELD:
-            for peer in peers:
-                try:
-                    chosen_peer = peers[peer]
-                    if self.owner.id == peer:
-                        continue
-                    else:
-                        send_token = self._prepare(self.token)
-                        self.peer_list.lock.release()
-                        chosen_peer.obtain_token(send_token)
-                        the_bool_solution = True
-                except:
-                    print("Peer can not receive token, trying another peer")
-                finally:
-                    self.peer_list.lock.acquire()
-                    if the_bool_solution:
+            if max(self.request.values()) > 0 and len(peers) > 1:
+                tmp_list = []
+                for key in peers:
+                    tmp_list.append(key)
+                owner_index = tmp_list.index(self.owner.id)
+                i = owner_index + 1
+                while True:
+                    if i > (len(tmp_list)-1):
+                        i = 0
+                    pid = tmp_list[i]
+                    if pid == self.owner.id:
                         break
-            self.state = NO_TOKEN
+                    if pid in self.request:
+                        if self.request[pid] > self.token[pid]:
+                            try:
+                                tmp_peer = peers[pid]
+                                send_token = self._prepare(self.token)
+                                self.peer_list.lock.release()
+                                tmp_peer.obtain_token(send_token)
+                                self.peer_list.lock.acquire()
+                                self.state = NO_TOKEN
+                                break
+                            except:
+                                print("Selected peer could not obtain token...")
+                                self.peer_list.lock.acquire()
+                    i += 1
+            else:
+                for peer in peers:
+                    try:
+                        chosen_peer = peers[peer]
+                        if self.owner.id == peer:
+                            continue
+                        else:
+                            send_token = self._prepare(self.token)
+                            self.peer_list.lock.release()
+                            chosen_peer.obtain_token(send_token)
+                            the_bool_solution = True
+                    except:
+                        print("Peer can not receive token, trying another peer")
+                    finally:
+                        self.peer_list.lock.acquire()
+                        if the_bool_solution:
+                            break
+                self.state = NO_TOKEN
         self.peer_list.lock.release()
 
     def register_peer(self, pid):
@@ -289,12 +311,9 @@ class DistributedLock(object):
         #
         self.peer_list.lock.acquire()
         self.time += 1
-        print("Added time...")
         token = self._unprepare(token)
-        print("after unprepare")
         self.token = token
         self.state = TOKEN_PRESENT
-        print("Got the token...")
         self.peer_list.lock.release()
 
     def display_status(self):

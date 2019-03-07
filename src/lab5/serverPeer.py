@@ -115,7 +115,10 @@ class Server(orb.Peer):
         #
         # Your code here.
         #
-        pass
+        self.drwlock.read_acquire()
+        readData = self.db.read()
+        self.drwlock.read_release()
+        return readData
 
     def write(self, fortune):
         """Write a fortune to the database.
@@ -130,8 +133,15 @@ class Server(orb.Peer):
         #
         # Your code here.
         #
-        pass
-
+        self.drwlock.write_acquire()
+        self.write_local(fortune)
+        peers = self.peer_list.get_peers()
+        for peer in peers:
+            if peer == self.owner.id:
+                continue
+            tmp_peer = peers[peer]
+            tmp_peer.write_local(fortune)
+        self.drwlock.write_release()
     def write_local(self, fortune):
         """Write a fortune to the database.
 
