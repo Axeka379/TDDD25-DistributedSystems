@@ -210,10 +210,10 @@ class DistributedLock(object):
             while True:
                 self.peer_list.lock.acquire()
                 if self.state == TOKEN_PRESENT:
-                    self.state = TOKEN_HELD
                     break
                 self.peer_list.lock.release()
-                continue
+
+        self.state = TOKEN_HELD
         self.peer_list.lock.release()
 
     def release(self):
