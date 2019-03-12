@@ -137,7 +137,7 @@ class Server(orb.Peer):
         self.write_local(fortune)
         peers = self.peer_list.get_peers()
         for peer in peers:
-            if peer == self.owner.id:
+            if peer == self.id:
                 continue
             tmp_peer = peers[peer]
             tmp_peer.write_local(fortune)
