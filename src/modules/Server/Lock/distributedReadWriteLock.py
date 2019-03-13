@@ -21,6 +21,7 @@ class DistributedReadWriteLock(readWriteLock.ReadWriteLock):
         readWriteLock.ReadWriteLock.__init__(self)
         # Create a distributed lock
         self.distributed_lock = distributed_lock
+        self.threading_lock = threading.Lock()
         #
         # Your code here.
         #
@@ -38,6 +39,7 @@ class DistributedReadWriteLock(readWriteLock.ReadWriteLock):
         #
         # Your code here.
         #
+        self.threading_lock.acquire()
         self.distributed_lock.acquire()
 
     def write_release(self):
@@ -52,6 +54,7 @@ class DistributedReadWriteLock(readWriteLock.ReadWriteLock):
         # Your code here.
         #
         self.distributed_lock.release()
+        self.threading_lock.release()
 
     def write_acquire_local(self):
         readWriteLock.ReadWriteLock.write_acquire(self)
